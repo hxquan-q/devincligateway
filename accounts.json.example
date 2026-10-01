@@ -1,0 +1,22 @@
+{
+ "strategy": "round_robin",
+ "max_attempts": 3,
+ "accounts": [
+  {
+   "name": "a1",
+   "api_key": "devin-session-token$<JWT>",
+   "api_server_url": "https://server.codeium.com"
+  },
+  {
+   "name": "a2",
+   "api_key": "devin-session-token$<JWT>",
+   "api_server_url": "https://server.codeium.com"
+  },
+  {
+   "name": "a3-proxy",
+   "api_key": "devin-session-token$<JWT>",
+   "api_server_url": "https://server.codeium.com",
+   "proxy": "socks5://user:pass@PROXY_HOST:PORT"
+  }
+ ]
+}

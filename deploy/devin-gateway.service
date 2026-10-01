@@ -1,0 +1,25 @@
+[Unit]
+Description=Devin Deep Gateway (OpenAI/Anthropic compatible)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=%i
+WorkingDirectory=/opt/devin-gateway
+# 对外鉴权 (务必改掉占位符!)
+Environment=GATEWAY_API_KEY=change-me-long-random
+# 凭据也可用环境变量注入 (优先于 ~/.devin/credentials.toml):
+#   DEVIN_API_KEY=devin-session-token$eyJ...
+#   DEVIN_API_SERVER_URL=https://server.codeium.com
+#   DEVIN_FP_HEX=<ci31.bin 的 hex>
+ExecStart=/opt/devin-gateway/.venv/bin/uvicorn deep_gateway:app --host 127.0.0.1 --port 8788 --workers 2
+Restart=always
+RestartSec=3
+# 硬化
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/devin-gateway
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,25 @@
+# 凭据 — 绝不入库
+credentials.toml
+accounts.json
+ci31.bin
+*.mitm
+*_req.bin
+*_resp.bin
+*frame*.bin
+*.b64
+pkce.json
+code.txt
+login_url.txt
+
+# 运行产物
+*.log
+__pycache__/
+*.pyc
+.venv/
+deep_server.log
+
+# 抓包与分析工作区
+capture/
+bundle/
+tooltest/
+.playwright-mcp/
