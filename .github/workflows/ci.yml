@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 语法编译
+        run: |
+          python -m py_compile deep_client.py deep_pool.py deep_gateway.py
+          python -m py_compile tools/*.py
+
+      - name: 依赖冒烟 (import)
+        run: |
+          pip install -q fastapi uvicorn
+          python -c "import ast,sys; [ast.parse(open(f,encoding='utf-8').read()) for f in ['deep_client.py','deep_pool.py','deep_gateway.py']]"
+
+      - name: 凭据泄漏扫描
+        run: |
+          set -e
+          fail=0
+          # 真实 JWT (占位符 eyJ... 带紧跟的点号, 不会命中 50+ 连续字符)
+          if grep -rInE 'eyJ[A-Za-z0-9_-]{50,}' --exclude-dir=.git . ; then echo "❌ 疑似真实 JWT"; fail=1; fi
+          # 真实 session key (占位符 <JWT> 不命中)
+          if grep -rInE 'devin-session-token\$[A-Za-z0-9_-]{100,}' --exclude-dir=.git . ; then echo "❌ 疑似真实 session key"; fail=1; fi
+          # org id / windsurf session
+          if grep -rInE 'org-[0-9a-f]{20,}|windsurf-session-[0-9a-f-]{20,}' --exclude-dir=.git . ; then echo "❌ 疑似 org/session id"; fail=1; fi
+          # 凭据文件本体不得入库
+          for f in credentials.toml ci31.bin accounts.json pkce.json; do
+            if find . -name "$f" -not -path "./.git/*" | grep -q .; then echo "❌ $f 不应存在"; fail=1; fi
+          done
+          # 抓包/请求转储
+          if find . \( -name "*.mitm" -o -name "*_req.bin" -o -name "*_resp.bin" \) -not -path "./.git/*" | grep -q .; then echo "❌ 抓包/转储文件不应存在"; fail=1; fi
+          [ "$fail" = "0" ] && echo "✅ 无凭据泄漏" || exit 1
+
+      - name: 配置模板存在性
+        run: |
+          test -f accounts.json.example || (echo "❌ 缺 accounts.json.example"; exit 1)
+          test -f LICENSE || (echo "❌ 缺 LICENSE"; exit 1)
